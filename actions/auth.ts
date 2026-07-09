@@ -46,7 +46,9 @@ export async function loginAction(formData: FormData) {
   };
   session.dbConnection = dbConnection;
   await session.save();
-  redirect('/dashboard');
+  const next = formData.get('next') as string;
+  const safeNext = next && next.startsWith('/') && !next.startsWith('//') ? next : '/dashboard';
+  redirect(safeNext);
 }
 
 export async function logoutAction() {

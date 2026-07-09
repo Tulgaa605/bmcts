@@ -15,11 +15,14 @@ export interface SessionData {
 }
 
 export const sessionOptions: SessionOptions = {
-  password: 'nebo-2018-iron-session-secret-key-32chars!!',
+  password: process.env.SESSION_SECRET || 'nebo-2018-iron-session-secret-key-32chars!!',
   cookieName: 'nebo_session',
   cookieOptions: {
-    secure: process.env.NODE_ENV === 'production',
+    // HTTP (LAN/PM2) дээр cookie хадгалагдахын тулд secure-ийг env-ээр удирдана
+    secure: process.env.COOKIE_SECURE === 'true',
     httpOnly: true,
+    sameSite: 'lax',
     maxAge: 8 * 60 * 60,
+    path: '/',
   },
 };

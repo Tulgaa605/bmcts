@@ -6,7 +6,13 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "postinstall": "node scripts/ensure-sqlite.js"
+    "postinstall": "node scripts/ensure-sqlite.js",
+    "pm2:start": "pm2 start ecosystem.config.js",
+    "pm2:stop": "pm2 stop nebo-bmcts",
+    "pm2:restart": "pm2 restart nebo-bmcts",
+    "pm2:delete": "pm2 delete nebo-bmcts",
+    "pm2:logs": "pm2 logs nebo-bmcts",
+    "pm2:status": "pm2 status"
   },
   "dependencies": {
     "ag-grid-community": "^36.0.0",
@@ -17,6 +23,7 @@
     "iron-session": "^8.0.4",
     "next": "^15.1.0",
     "node-firebird": "^1.1.10",
+    "pm2": "^7.0.3",
     "react": "^19.0.0",
     "react-chartjs-2": "^5.3.0",
     "react-dom": "^19.0.0",

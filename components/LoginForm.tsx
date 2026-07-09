@@ -4,7 +4,15 @@ import Link from 'next/link';
 import { useActionState } from 'react';
 import { loginAction } from '@/actions/auth';
 
-export default function LoginForm({ defaultDb, successMsg }: { defaultDb: string; successMsg?: string | null }) {
+export default function LoginForm({
+  defaultDb,
+  successMsg,
+  nextPath,
+}: {
+  defaultDb: string;
+  successMsg?: string | null;
+  nextPath?: string | null;
+}) {
   const [state, formAction, pending] = useActionState(
     async (_prev: { error?: string } | null, formData: FormData) => loginAction(formData),
     null
@@ -30,6 +38,10 @@ export default function LoginForm({ defaultDb, successMsg }: { defaultDb: string
         </div>
 
         <form action={formAction} className="space-y-4">
+          <input type="hidden" name="db_connection" value={defaultDb} />
+          {nextPath && nextPath.startsWith('/') && !nextPath.startsWith('//') && (
+            <input type="hidden" name="next" value={nextPath} />
+          )}
           {successMsg && (
             <div className="rounded border border-green-200 bg-green-50 px-4 py-2 text-sm text-green-700">{successMsg}</div>
           )}
