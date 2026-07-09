@@ -1,0 +1,41 @@
+{
+  "name": "nebo-bmcts",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "postinstall": "node scripts/ensure-sqlite.js"
+  },
+  "dependencies": {
+    "ag-grid-community": "^36.0.0",
+    "ag-grid-react": "^36.0.0",
+    "bcryptjs": "^2.4.3",
+    "better-sqlite3": "^11.7.0",
+    "chart.js": "^4.4.7",
+    "iron-session": "^8.0.4",
+    "next": "^15.1.0",
+    "node-firebird": "^1.1.10",
+    "react": "^19.0.0",
+    "react-chartjs-2": "^5.3.0",
+    "react-dom": "^19.0.0",
+    "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
+    "@types/better-sqlite3": "^7.6.12",
+    "@types/node": "^22.10.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.4.49",
+    "tailwindcss": "^3.4.16",
+    "typescript": "^5.7.2"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "better-sqlite3"
+    ]
+  }
+}

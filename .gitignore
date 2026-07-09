@@ -1,0 +1,7 @@
+node_modules/
+.next/
+nebo.db
+nebo.db-wal
+nebo.db-shm
+*.log
+.DS_Store
