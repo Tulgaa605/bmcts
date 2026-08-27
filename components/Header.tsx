@@ -39,7 +39,7 @@ export default function Header({
     <header className="border-b-2 border-nebo-primary bg-white">
       <div className="flex items-center justify-between gap-3 border-b border-gray-200 bg-slate-50 px-3 py-2 sm:px-5">
         <Link href="/dashboard" className="flex shrink-0 items-baseline gap-1" onClick={closeMenu}>
-          <span className="text-xl font-black tracking-wider text-nebo-dark sm:text-2xl">NEBO</span>
+          <span className="text-xl font-black tracking-wider text-nebo-dark sm:text-2xl">NYBO</span>
           <span className="text-xs font-bold text-red-500 sm:text-sm">2018</span>
         </Link>
 
@@ -75,7 +75,6 @@ export default function Header({
         </button>
       </div>
 
-      {/* Desktop / tablet nav */}
       <nav className="hidden bg-gradient-to-b from-nebo-light to-nebo-primary md:flex">
         <Link
           href="/dashboard"
@@ -110,7 +109,6 @@ export default function Header({
         ))}
       </nav>
 
-      {/* Mobile nav drawer */}
       {menuOpen && (
         <div className="border-b border-gray-200 bg-white md:hidden">
           <div className="space-y-1 px-3 py-3 text-sm">
