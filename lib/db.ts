@@ -211,8 +211,9 @@ export async function updateItemQty(config: DbConnectionConfig | undefined, item
   const income = (await dbGet<{ s: number }>(config, 'SELECT COALESCE(SUM(qty),0) as s FROM bm_income WHERE item_id = ?', [itemId]))?.s || 0;
   const sales = (await dbGet<{ s: number }>(config, 'SELECT COALESCE(SUM(qty),0) as s FROM bm_sales WHERE item_id = ?', [itemId]))?.s || 0;
   const expense = (await dbGet<{ s: number }>(config, 'SELECT COALESCE(SUM(qty),0) as s FROM bm_expense WHERE item_id = ?', [itemId]))?.s || 0;
-  const loads = (await dbGet<{ s: number }>(config, "SELECT COALESCE(SUM(qty),0) as s FROM bm_loading WHERE item_id = ? AND load_type='load'", [itemId]))?.s || 0;
-  const unloads = (await dbGet<{ s: number }>(config, "SELECT COALESCE(SUM(qty),0) as s FROM bm_loading WHERE item_id = ? AND load_type='unload'", [itemId]))?.s || 0;
+  const typeCol = useFirebird() && config ? 'load_type' : 'type';
+  const loads = (await dbGet<{ s: number }>(config, `SELECT COALESCE(SUM(qty),0) as s FROM bm_loading WHERE item_id = ? AND ${typeCol}='load'`, [itemId]))?.s || 0;
+  const unloads = (await dbGet<{ s: number }>(config, `SELECT COALESCE(SUM(qty),0) as s FROM bm_loading WHERE item_id = ? AND ${typeCol}='unload'`, [itemId]))?.s || 0;
 
   const currentQty = item.initial_qty + income + loads - sales - expense - unloads;
   await dbRun(config, 'UPDATE bm_items SET current_qty = ? WHERE id = ?', [currentQty, itemId]);

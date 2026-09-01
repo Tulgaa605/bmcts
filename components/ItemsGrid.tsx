@@ -21,6 +21,7 @@ type ItemRow = {
   name: string;
   unit: string;
   initial_qty: number;
+  current_qty: number;
 };
 
 export default function ItemsGrid({ rows }: { rows: ItemRow[] }) {
@@ -37,16 +38,18 @@ export default function ItemsGrid({ rows }: { rows: ItemRow[] }) {
       { field: 'name', header: 'Нэр' },
       { field: 'unit', header: 'Нэгж' },
       { field: 'initial_qty', header: 'Эхний үлдэгдэл' },
+      { field: 'current_qty', header: 'Эцсийн үлдэгдэл' },
     ],
     []
   );
 
   const columnDefs = useMemo<ColDef<ItemRow>[]>(
     () => [
-      { field: 'code', headerName: 'Код', flex: 1, minWidth: 120, filter: true },
+      { field: 'code', headerName: 'Код', flex: 1, minWidth: 110, filter: true },
       { field: 'name', headerName: 'Нэр', flex: 1, minWidth: 120, filter: true },
-      { field: 'unit', headerName: 'Нэгж', flex: 1, minWidth: 120 },
+      { field: 'unit', headerName: 'Нэгж', flex: 1, minWidth: 80 },
       { field: 'initial_qty', headerName: 'Эхний үлдэгдэл', flex: 1, minWidth: 120, type: 'numericColumn' },
+      { field: 'current_qty', headerName: 'Эцсийн үлдэгдэл', flex: 1, minWidth: 120, type: 'numericColumn' },
       {
         headerName: 'Үйлдэл',
         width: 100,
@@ -125,7 +128,7 @@ export default function ItemsGrid({ rows }: { rows: ItemRow[] }) {
           {pending ? 'Татаж байна...' : 'Excel-ээс татах'}
         </button>
         <span className="text-xs text-gray-500">
-          Багана: Код, Нэр, Нэгж, Эхний үлдэгдэл
+          Багана: Код, Нэр, Нэгж, Эхний үлдэгдэл, Эцсийн үлдэгдэл
         </span>
         {status && <span className="text-sm text-nebo-primary">{status}</span>}
       </div>
@@ -156,7 +159,7 @@ export default function ItemsGrid({ rows }: { rows: ItemRow[] }) {
           items={buildGridMenuItems(
             gridApiRef.current,
             exportColumns,
-            ['Код', 'Нэр', 'Нэгж', 'Эхний үлдэгдэл'],
+            ['Код', 'Нэр', 'Нэгж', 'Эхний үлдэгдэл', 'Эцсийн үлдэгдэл'],
             'bm-items.xlsx',
             'bm-items-template.xlsx'
           )}

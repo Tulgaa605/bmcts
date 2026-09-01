@@ -46,7 +46,7 @@ export default async function ReportPage({ searchParams }: { searchParams: Promi
         <div className="card mb-4 overflow-x-auto">
           <h3 className="mb-3 text-sm font-semibold">Бараа материалын үлдэгдлийн тайлан</h3>
           <table className="w-full text-xs">
-            <thead><tr className="bg-nebo-primary text-white">{['Код','Нэр','Нэгж','Эхний үлдэгдэл','Эхний үнэ','Одоогийн үлдэгдэл','Нийт үнэ'].map(h => <th key={h} className="px-3 py-2 text-left">{h}</th>)}</tr></thead>
+            <thead><tr className="bg-nebo-primary text-white">{['Код','Нэр','Нэгж','Эхний үлдэгдэл','Эхний үнэ','Эцсийн үлдэгдэл','Нийт үнэ'].map(h => <th key={h} className="px-3 py-2 text-left">{h}</th>)}</tr></thead>
             <tbody>{stockReport.map(r => (
               <tr key={r.code} className="border-b hover:bg-slate-50">
                 <td className="px-3 py-2">{r.code}</td><td className="px-3 py-2">{r.name}</td><td className="px-3 py-2">{r.unit}</td>
@@ -60,7 +60,7 @@ export default async function ReportPage({ searchParams }: { searchParams: Promi
         <div className="card overflow-x-auto">
           <h3 className="mb-3 text-sm font-semibold">Бараа материалын хөдөлгөөний тайлан ({year})</h3>
           <table className="w-full text-xs">
-            <thead><tr className="bg-nebo-primary text-white">{['Код','Нэр','Нэгж','Одоогийн үлдэгдэл','Орлого','Зарлага','Борлуулалт'].map(h => <th key={h} className="px-3 py-2 text-left">{h}</th>)}</tr></thead>
+            <thead><tr className="bg-nebo-primary text-white">{['Код','Нэр','Нэгж','Эцсийн үлдэгдэл','Орлого','Зарлага','Борлуулалт'].map(h => <th key={h} className="px-3 py-2 text-left">{h}</th>)}</tr></thead>
             <tbody>{movementReport.map(r => (
               <tr key={r.code} className="border-b hover:bg-slate-50">
                 <td className="px-3 py-2">{r.code}</td><td className="px-3 py-2">{r.name}</td><td className="px-3 py-2">{r.unit}</td>

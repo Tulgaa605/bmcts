@@ -24,6 +24,13 @@ export async function middleware(request: NextRequest) {
   const isPublic = PUBLIC_PATHS.has(pathname);
   const isLoggedIn = Boolean(session.user);
 
+  if (pathname.startsWith('/api/')) {
+    if (!isLoggedIn) {
+      return NextResponse.json({ error: 'Нэвтрэх шаардлагатай' }, { status: 401 });
+    }
+    return response;
+  }
+
   // Нэвтрээгүй хэрэглэгчийг бүх хуудсаас login руу чиглүүлнэ
   if (!isLoggedIn && !isPublic) {
     const loginUrl = new URL('/login', request.url);
@@ -41,6 +48,10 @@ export async function middleware(request: NextRequest) {
   // Үндсэн хуудас
   if (pathname === '/') {
     return NextResponse.redirect(new URL(isLoggedIn ? '/dashboard' : '/login', request.url));
+  }
+
+  if (isLoggedIn && (pathname === '/bm/inventory' || pathname === '/bm/loading')) {
+    return NextResponse.redirect(new URL('/bm/items', request.url));
   }
 
   return response;

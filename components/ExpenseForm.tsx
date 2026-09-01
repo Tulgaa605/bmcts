@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { createExpenseAction } from '@/actions/bm';
 
-type Item = { id: number; code: string; name: string; unit: string; current_qty: number; price: number };
+type Item = { id: number; code: string; name: string; unit: string; initial_qty: number; current_qty: number; price: number };
 
 const PURPOSES = ['Албан хэрэгцээ', 'Үйлдвэрлэл', 'Засвар үйлчилгээ', 'Бусад'];
 
@@ -58,7 +58,7 @@ export default function ExpenseForm({ docNo, items }: { docNo: string; items: It
             <option value="">— Бараа сонгох —</option>
             {items.map((i) => (
               <option key={i.id} value={i.id} disabled={i.current_qty <= 0}>
-                {i.code} · {i.name} {i.current_qty <= 0 ? '(үлдэгдэлгүй)' : `(үлд: ${i.current_qty} ${i.unit})`}
+                {i.code} · {i.name} {i.current_qty <= 0 ? '(үлдэгдэлгүй)' : `(эхний: ${i.initial_qty} / эцсийн: ${i.current_qty} ${i.unit})`}
               </option>
             ))}
           </select>
@@ -92,6 +92,16 @@ export default function ExpenseForm({ docNo, items }: { docNo: string; items: It
               <option key={p} value={p}>{p}</option>
             ))}
           </select>
+        </div>
+
+        <div>
+          <label className={labelCls}>Эхний үлдэгдэл</label>
+          <div className={readCls}>{selected ? `${selected.initial_qty} ${selected.unit}` : '—'}</div>
+        </div>
+
+        <div>
+          <label className={labelCls}>Эцсийн үлдэгдэл</label>
+          <div className={readCls}>{selected ? `${selected.current_qty} ${selected.unit}` : '—'}</div>
         </div>
 
         <div>
