@@ -7,7 +7,6 @@ type Item = { id: number; code: string; name: string; unit: string; initial_qty:
 
 const PURPOSES = ['Албан хэрэгцээ', 'Үйлдвэрлэл', 'Засвар үйлчилгээ', 'Бусад'];
 
-// Үлдэгдэл хүртэлх сонгох боломжтой тоонуудыг үүсгэнэ (select-д зориулж)
 function buildQtyOptions(stock: number): number[] {
   const max = Math.floor(stock);
   if (max <= 0) return [];
