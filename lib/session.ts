@@ -18,7 +18,6 @@ export const sessionOptions: SessionOptions = {
   password: process.env.SESSION_SECRET || 'nebo-2018-iron-session-secret-key-32chars!!',
   cookieName: 'nebo_session',
   cookieOptions: {
-    // HTTP (LAN/PM2) дээр cookie хадгалагдахын тулд secure-ийг env-ээр удирдана
     secure: process.env.COOKIE_SECURE === 'true',
     httpOnly: true,
     sameSite: 'lax',

@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'NEBO 2018',
+  title: 'NYBO 2018',
   description: 'Нягтлан бодох бүртгэлийн систем',
 };
 
