@@ -38,6 +38,6 @@ export default function DashboardCharts({ data }: { data: { monthlyIncome: numbe
           datasets: [{ label: 'Зардал', data: data.monthlyExpense, borderColor: '#27ae60', tension: 0.3 }],
         }} options={opts} />
       </div>
-    </div>
+    </div>  
   );
 }
