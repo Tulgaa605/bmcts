@@ -116,6 +116,66 @@ db.exec(`
   );
 `);
 
+function columnExists(table: string, column: string) {
+  const cols = db.prepare(`PRAGMA table_info(${table})`).all() as { name: string }[];
+  return cols.some((c) => c.name === column);
+}
+
+function migrateSchema() {
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS bm_destinations (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      kind TEXT NOT NULL,
+      name TEXT NOT NULL,
+      linked_org_id INTEGER,
+      UNIQUE(kind, name)
+    );
+  `);
+  if (!columnExists('bm_expense', 'dest_id')) db.exec('ALTER TABLE bm_expense ADD COLUMN dest_id INTEGER');
+  if (!columnExists('bm_expense', 'dest_org_id')) db.exec('ALTER TABLE bm_expense ADD COLUMN dest_org_id INTEGER');
+  if (!columnExists('bm_income', 'source_org_id')) db.exec('ALTER TABLE bm_income ADD COLUMN source_org_id INTEGER');
+  if (!columnExists('bm_income', 'source_expense_id')) db.exec('ALTER TABLE bm_income ADD COLUMN source_expense_id INTEGER');
+}
+migrateSchema();
+
+const GEO_DESTINATIONS: [string, string][] = [
+  ['duureg', 'Баянзүрх'],
+  ['duureg', 'Сүхбаатар'],
+  ['duureg', 'Чингэлтэй'],
+  ['duureg', 'Хан-Уул'],
+  ['duureg', 'Баянгол'],
+  ['duureg', 'Сонгинохайрхан'],
+  ['duureg', 'Багануур'],
+  ['duureg', 'Налайх'],
+  ['duureg', 'Багахангай'],
+  ['sum', 'Архангай / Цэцэрлэг'],
+  ['sum', 'Баянхонгор / Баянхонгор'],
+  ['sum', 'Булган / Булган'],
+  ['sum', 'Говь-Алтай / Есөнбулаг'],
+  ['sum', 'Дорноговь / Сайншанд'],
+  ['sum', 'Дорнод / Хэрлэн'],
+  ['sum', 'Дундговь / Мандалговь'],
+  ['sum', 'Завхан / Улиастай'],
+  ['sum', 'Өвөрхангай / Арвайхээр'],
+  ['sum', 'Өмнөговь / Даланзадгад'],
+  ['sum', 'Сүхбаатар / Баруун-Урт'],
+  ['sum', 'Сэлэнгэ / Сүхбаатар'],
+  ['sum', 'Төв / Зуунмод'],
+  ['sum', 'Увс / Улаангом'],
+  ['sum', 'Ховд / Жаргалант'],
+  ['sum', 'Хөвсгөл / Мөрөн'],
+  ['sum', 'Хэнтий / Чингис'],
+  ['sum', 'Орхон / Баян-Өндөр'],
+  ['sum', 'Дархан-Уул / Дархан'],
+  ['sum', 'Говьсүмбэр / Сүмбэр'],
+];
+
+function seedDestinations() {
+  const insert = db.prepare('INSERT OR IGNORE INTO bm_destinations (kind, name, linked_org_id) VALUES (?, ?, NULL)');
+  for (const [kind, name] of GEO_DESTINATIONS) insert.run(kind, name);
+}
+seedDestinations();
+
 function seedData() {
   const orgCount = db.prepare('SELECT COUNT(*) as c FROM organizations').get() as { c: number };
   if (orgCount.c > 0) return;
@@ -147,6 +207,10 @@ export function sqliteQuery<T>(sql: string, params: unknown[] = []): T[] {
 
 export function sqliteRun(sql: string, params: unknown[] = []): void {
   db.prepare(sql).run(...params);
+}
+
+export function sqliteLastId(): number {
+  return Number((db.prepare('SELECT last_insert_rowid() as id').get() as { id: number }).id);
 }
 
 export function sqliteExec(sql: string): void {

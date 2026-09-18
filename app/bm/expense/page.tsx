@@ -1,7 +1,7 @@
 import Header from '@/components/Header';
 import Alert from '@/components/Alert';
 import DeleteButton from '@/components/DeleteButton';
-import ExpenseForm from '@/components/ExpenseForm';
+import ExpenseModal from '@/components/ExpenseModal';
 import { getDbConfig, requireUser } from '@/lib/auth';
 import { dbAll, nextDocNo } from '@/lib/db';
 import { deleteExpenseAction } from '@/actions/bm';
@@ -22,14 +22,17 @@ export default async function ExpensePage({ searchParams }: { searchParams: Prom
     <>
       <Header user={user} activeMenu="bm" dbConnection={config?.label} />
       <div className="page-wrap">
-        <div className="mb-4 flex flex-col gap-2 sm:mb-5 sm:flex-row sm:items-center sm:justify-between">
+        <div className="mb-4 flex flex-col gap-3 sm:mb-5 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 className="page-title">Бараа материалын зарлага</h2>
             <p className="page-subtitle">Агуулахаас бараа зарлагадах бүртгэл</p>
           </div>
-          <span className="w-fit rounded-full bg-nebo-primary/10 px-3 py-1 text-xs font-semibold text-nebo-primary">
-            Нийт {records.length} бичлэг
-          </span>
+          <div className="flex items-center gap-3 self-end sm:self-auto">
+            <span className="hidden rounded-full bg-nebo-primary/10 px-3 py-1 text-xs font-semibold text-nebo-primary sm:inline">
+              Нийт {records.length} бичлэг
+            </span>
+            <ExpenseModal docNo={docNo} items={items} />
+          </div>
         </div>
 
         <Alert message={msg} />
@@ -64,14 +67,6 @@ export default async function ExpensePage({ searchParams }: { searchParams: Prom
           </div>
         )}
 
-        <div className="mb-4 rounded-xl border border-gray-200 bg-white p-4 shadow-sm sm:mb-5 sm:p-6">
-          <h3 className="mb-4 flex items-center gap-2 text-sm font-bold text-gray-700">
-            <span className="inline-block h-4 w-1 rounded bg-nebo-primary" />
-            Шинэ зарлага бүртгэх
-          </h3>
-          <ExpenseForm docNo={docNo} items={items} />
-        </div>
-
         <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
           <div className="flex flex-col gap-1 border-b border-gray-100 px-3 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-5">
             <h3 className="text-sm font-bold text-gray-700">Зарлагын түүх</h3>
@@ -90,7 +85,7 @@ export default async function ExpensePage({ searchParams }: { searchParams: Prom
                 {records.length === 0 ? (
                   <tr>
                     <td colSpan={10} className="px-4 py-12 text-center text-gray-400">
-                      Одоогоор зарлагын бичлэг алга. Дээрх формоор эхний зарлагаа бүртгээрэй.
+                      Одоогоор зарлагын бичлэг алга. Баруун дээд «Зарлага бүртгэх» товчоор бүртгэнэ.
                     </td>
                   </tr>
                 ) : records.map(r => (

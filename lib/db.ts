@@ -1,7 +1,7 @@
 import bcrypt from 'bcryptjs';
 import { DbConnectionConfig, useFirebird } from './connection';
 import { fbExec, fbGet, fbQuery, fbRun } from './firebird';
-import { sqliteDb, sqliteExec, sqliteGet, sqliteQuery, sqliteRun } from './sqlite';
+import { sqliteDb, sqliteExec, sqliteGet, sqliteLastId, sqliteQuery, sqliteRun } from './sqlite';
 
 const FB_SCHEMA = `
 CREATE TABLE organizations (
@@ -202,6 +202,15 @@ export async function dbRun(config: DbConnectionConfig | undefined, sql: string,
     return;
   }
   sqliteRun(q, params);
+}
+
+export async function dbInsert(config: DbConnectionConfig | undefined, sql: string, params: unknown[] = []): Promise<number> {
+  await dbRun(config, sql, params);
+  if (useFirebird() && config) {
+    const row = await fbGet<{ id: number }>(config, 'SELECT MAX(id) as id FROM bm_expense');
+    return row?.id || 0;
+  }
+  return sqliteLastId();
 }
 
 export async function updateItemQty(config: DbConnectionConfig | undefined, itemId: number) {
