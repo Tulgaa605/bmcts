@@ -14,6 +14,8 @@ export default async function ExpensePage({ searchParams }: { searchParams: Prom
     SELECT e.*, b.code as item_code, b.name as item_name, b.unit FROM bm_expense e JOIN bm_items b ON e.item_id = b.id
     WHERE e.org_id = ? ORDER BY e.doc_date DESC, e.id DESC`, [user.org_id]);
   const items = await dbAll<{ id: number; code: string; name: string; unit: string; initial_qty: number; current_qty: number; price: number }>(config, 'SELECT id, code, name, unit, initial_qty, current_qty, initial_price as price FROM bm_items WHERE org_id = ? ORDER BY code', [user.org_id]);
+  const orgs = await dbAll<{ id: number; name: string }>(config, 'SELECT id, name FROM organizations WHERE id != ? ORDER BY name', [user.org_id]);
+  const destinations = await dbAll<{ id: number; kind: string; name: string }>(config, 'SELECT id, kind, name FROM bm_destinations ORDER BY kind, name');
   const docNo = await nextDocNo(config, 'ZAR', user.org_id);
 
   const totalSum = records.reduce((s, r) => s + (r.total || 0), 0);
@@ -31,7 +33,7 @@ export default async function ExpensePage({ searchParams }: { searchParams: Prom
             <span className="hidden rounded-full bg-nebo-primary/10 px-3 py-1 text-xs font-semibold text-nebo-primary sm:inline">
               Нийт {records.length} бичлэг
             </span>
-            <ExpenseModal docNo={docNo} items={items} />
+            <ExpenseModal docNo={docNo} items={items} orgs={orgs} destinations={destinations} />
           </div>
         </div>
 
@@ -76,7 +78,7 @@ export default async function ExpensePage({ searchParams }: { searchParams: Prom
             <table className="w-full min-w-[720px] text-sm">
               <thead>
                 <tr className="bg-slate-50 text-xs uppercase tracking-wide text-gray-500">
-                  {['Дугаар','Огноо','Код','Бараа','Тоо','Нэгж','Үнэ','Нийт','Зориулалт',''].map((h, idx) => (
+                  {['Дугаар','Огноо','Код','Бараа','Тоо','Нэгж','Үнэ','Нийт','Хаашаа',''].map((h, idx) => (
                     <th key={idx} className={`px-4 py-3 font-semibold ${['Тоо','Үнэ','Нийт'].includes(h) ? 'text-right' : 'text-left'}`}>{h}</th>
                   ))}
                 </tr>
@@ -112,4 +114,3 @@ export default async function ExpensePage({ searchParams }: { searchParams: Prom
     </>
   );
 }
-0

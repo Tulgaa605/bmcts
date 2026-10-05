@@ -4,8 +4,8 @@ import { useState } from 'react';
 import { createExpenseAction } from '@/actions/bm';
 
 type Item = { id: number; code: string; name: string; unit: string; initial_qty: number; current_qty: number; price: number };
-
-const PURPOSES = ['Албан хэрэгцээ', 'Үйлдвэрлэл', 'Засвар үйлчилгээ', 'Бусад'];
+type OrgOpt = { id: number; name: string };
+type DestOpt = { id: number; kind: string; name: string };
 
 function buildQtyOptions(stock: number): number[] {
   const max = Math.floor(stock);
@@ -17,16 +17,28 @@ function buildQtyOptions(stock: number): number[] {
   return opts;
 }
 
-export default function ExpenseForm({ docNo, items }: { docNo: string; items: Item[] }) {
+export default function ExpenseForm({
+  docNo,
+  items,
+  orgs,
+  destinations,
+}: {
+  docNo: string;
+  items: Item[];
+  orgs: OrgOpt[];
+  destinations: DestOpt[];
+}) {
   const [selected, setSelected] = useState<Item | null>(null);
   const [qty, setQty] = useState(0);
-  const [purpose, setPurpose] = useState('');
+  const [destination, setDestination] = useState('');
 
   const today = new Date().toISOString().split('T')[0];
   const price = selected?.price ?? 0;
   const total = qty * price;
   const qtyOptions = selected ? buildQtyOptions(selected.current_qty) : [];
-  const ready = !!selected && qty > 0 && !!purpose;
+  const ready = !!selected && qty > 0 && !!destination;
+  const duureg = destinations.filter((d) => d.kind === 'duureg');
+  const sum = destinations.filter((d) => d.kind === 'sum');
 
   function onItemChange(e: React.ChangeEvent<HTMLSelectElement>) {
     const id = parseInt(e.target.value);
@@ -84,12 +96,30 @@ export default function ExpenseForm({ docNo, items }: { docNo: string; items: It
         </div>
 
         <div>
-          <label className={labelCls}>Зориулалт *</label>
-          <select name="purpose" required value={purpose} onChange={(e) => setPurpose(e.target.value)} className={selectCls}>
+          <label className={labelCls}>Хаашаа *</label>
+          <select name="destination" required value={destination} onChange={(e) => setDestination(e.target.value)} className={selectCls}>
             <option value="">— Сонгох —</option>
-            {PURPOSES.map((p) => (
-              <option key={p} value={p}>{p}</option>
-            ))}
+            {orgs.length > 0 && (
+              <optgroup label="Салбар">
+                {orgs.map((o) => (
+                  <option key={o.id} value={`org:${o.id}`}>{o.name}</option>
+                ))}
+              </optgroup>
+            )}
+            {duureg.length > 0 && (
+              <optgroup label="Дүүрэг">
+                {duureg.map((d) => (
+                  <option key={d.id} value={`dest:${d.id}`}>{d.name}</option>
+                ))}
+              </optgroup>
+            )}
+            {sum.length > 0 && (
+              <optgroup label="Сум">
+                {sum.map((d) => (
+                  <option key={d.id} value={`dest:${d.id}`}>{d.name}</option>
+                ))}
+              </optgroup>
+            )}
           </select>
         </div>
 

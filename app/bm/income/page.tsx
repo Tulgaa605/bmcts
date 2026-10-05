@@ -27,7 +27,7 @@ export default async function IncomePage({ searchParams }: { searchParams: Promi
       <div className="page-wrap">
         <div className="mb-4 sm:mb-5">
           <h2 className="page-title">БМ орлогын бүртгэл</h2>
-          <p className="page-subtitle">Гараар эсвэл Excel-ээс орлого бүртгэнэ</p>
+            <p className="page-subtitle">Гараар, Excel-ээс, эсвэл нөгөө байгууллагын зарлагаас орлогоор орно</p>
         </div>
         <Alert message={msg} />
 

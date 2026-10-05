@@ -4,8 +4,20 @@ import { useEffect, useState } from 'react';
 import ExpenseForm from '@/components/ExpenseForm';
 
 type Item = { id: number; code: string; name: string; unit: string; initial_qty: number; current_qty: number; price: number };
+type OrgOpt = { id: number; name: string };
+type DestOpt = { id: number; kind: string; name: string };
 
-export default function ExpenseModal({ docNo, items }: { docNo: string; items: Item[] }) {
+export default function ExpenseModal({
+  docNo,
+  items,
+  orgs,
+  destinations,
+}: {
+  docNo: string;
+  items: Item[];
+  orgs: OrgOpt[];
+  destinations: DestOpt[];
+}) {
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
@@ -45,7 +57,7 @@ export default function ExpenseModal({ docNo, items }: { docNo: string; items: I
                 Хаах
               </button>
             </div>
-            <ExpenseForm docNo={docNo} items={items} />
+            <ExpenseForm docNo={docNo} items={items} orgs={orgs} destinations={destinations} />
           </div>
         </div>
       )}

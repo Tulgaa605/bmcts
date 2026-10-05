@@ -50,8 +50,8 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL(isLoggedIn ? '/dashboard' : '/login', request.url));
   }
 
-  if (isLoggedIn && (pathname === '/bm/inventory' || pathname === '/bm/loading')) {
-    return NextResponse.redirect(new URL('/bm/items', request.url));
+  if (isLoggedIn && (pathname === '/bm/inventory' || pathname === '/bm/loading' || pathname === '/bm/transfer')) {
+    return NextResponse.redirect(new URL('/bm/expense', request.url));
   }
 
   return response;

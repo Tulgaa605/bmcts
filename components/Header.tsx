@@ -9,7 +9,6 @@ const bmLinks = [
   { href: '/bm/report', label: 'БМ тайлан' },
   { href: '/bm/income', label: 'БМ орлогын бүртгэл' },
   { href: '/bm/expense', label: 'БМ зарлагын бүртгэл' },
-  { href: '/bm/transfer', label: 'БМ Нярав хоорондох шилжүүлэг' },
   { href: '/bm/items', label: 'БМ нэр, эхний үлдэгдэл бүртгэл' },
 ];
 

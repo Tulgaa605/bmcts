@@ -46,7 +46,7 @@ export default function IncomeGrid({ rows }: { rows: IncomeRow[] }) {
       { field: 'unit', header: 'Нэгж' },
       { field: 'price', header: 'Үнэ' },
       { field: 'total', header: 'Нийт' },
-      { field: 'supplier', header: 'Нийлүүлэгч' },
+      { field: 'supplier', header: 'Хаанаас' },
     ],
     []
   );
@@ -73,7 +73,7 @@ export default function IncomeGrid({ rows }: { rows: IncomeRow[] }) {
         type: 'numericColumn',
         valueFormatter: (p) => (p.value != null ? Number(p.value).toLocaleString() : ''),
       },
-      { field: 'supplier', headerName: 'Нийлүүлэгч', width: 140, filter: true },
+      { field: 'supplier', headerName: 'Хаанаас', width: 180, filter: true },
       {
         headerName: 'Үйлдэл',
         width: 100,
