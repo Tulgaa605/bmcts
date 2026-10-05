@@ -76,6 +76,9 @@ export default async function ExpensePage({ searchParams }: { searchParams: Prom
           </div>
           <div className="overflow-x-auto">
             <table className="w-full min-w-[720px] text-sm">
+              <colgroup>
+                <col className="w-12 v-43 justify-between " />
+              </colgroup>
               <thead>
                 <tr className="bg-slate-50 text-xs uppercase tracking-wide text-gray-500">
                   {['Дугаар','Огноо','Код','Бараа','Тоо','Нэгж','Үнэ','Нийт','Хаашаа',''].map((h, idx) => (
