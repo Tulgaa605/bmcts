@@ -1,24 +1,21 @@
 import Header from '@/components/Header';
 import Alert from '@/components/Alert';
-import DeleteButton from '@/components/DeleteButton';
 import ExpenseModal from '@/components/ExpenseModal';
+import ExpenseHistory from '@/components/ExpenseHistory';
 import { getDbConfig, requireUser } from '@/lib/auth';
 import { dbAll, nextDocNo } from '@/lib/db';
-import { deleteExpenseAction } from '@/actions/bm';
 
 export default async function ExpensePage({ searchParams }: { searchParams: Promise<{ msg?: string }> }) {
   const user = await requireUser();
   const config = await getDbConfig();
   const { msg } = await searchParams;
-  const records = await dbAll<{ id: number; doc_no: string; doc_date: string; item_code: string; item_name: string; unit: string; qty: number; price: number; total: number; purpose: string }>(config, `
+  const records = await dbAll<{ id: number; doc_no: string; doc_date: string; item_code: string; item_name: string; unit: string; qty: number; price: number; total: number; purpose: string; is_return: number | null }>(config, `
     SELECT e.*, b.code as item_code, b.name as item_name, b.unit FROM bm_expense e JOIN bm_items b ON e.item_id = b.id
     WHERE e.org_id = ? ORDER BY e.doc_date DESC, e.id DESC`, [user.org_id]);
   const items = await dbAll<{ id: number; code: string; name: string; unit: string; initial_qty: number; current_qty: number; price: number }>(config, 'SELECT id, code, name, unit, initial_qty, current_qty, initial_price as price FROM bm_items WHERE org_id = ? ORDER BY code', [user.org_id]);
   const orgs = await dbAll<{ id: number; name: string }>(config, 'SELECT id, name FROM organizations WHERE id != ? ORDER BY name', [user.org_id]);
   const destinations = await dbAll<{ id: number; kind: string; name: string }>(config, 'SELECT id, kind, name FROM bm_destinations ORDER BY kind, name');
   const docNo = await nextDocNo(config, 'ZAR', user.org_id);
-
-  const totalSum = records.reduce((s, r) => s + (r.total || 0), 0);
 
   return (
     <>
@@ -27,17 +24,20 @@ export default async function ExpensePage({ searchParams }: { searchParams: Prom
         <div className="mb-4 flex flex-col gap-3 sm:mb-5 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 className="page-title">Бараа материалын зарлага</h2>
-            <p className="page-subtitle">Агуулахаас бараа зарлагадах бүртгэл</p>
+            <p className="page-subtitle">Хаашаа сонгоод шилжүүлнэ. Үлдэгдэл буцаахад орлого биш, эцсийн үлдэгдэл нэмэгдэнэ</p>
           </div>
-          <div className="flex items-center gap-3 self-end sm:self-auto">
-            <span className="hidden rounded-full bg-nebo-primary/10 px-3 py-1 text-xs font-semibold text-nebo-primary sm:inline">
-              Нийт {records.length} бичлэг
-            </span>
+          <div className="self-end sm:self-auto">
             <ExpenseModal docNo={docNo} items={items} orgs={orgs} destinations={destinations} />
           </div>
         </div>
 
         <Alert message={msg} />
+
+        {items.length === 0 && (
+          <p className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+            Эхлээд «БМ нэр, эхний үлдэгдэл бүртгэл» дээр бараа нэмнэ үү.
+          </p>
+        )}
 
         {items.length > 0 && (
           <div className="mb-4 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
@@ -69,50 +69,7 @@ export default async function ExpensePage({ searchParams }: { searchParams: Prom
           </div>
         )}
 
-        <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
-          <div className="flex flex-col gap-1 border-b border-gray-100 px-3 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-5">
-            <h3 className="text-sm font-bold text-gray-700">Зарлагын түүх</h3>
-            <span className="text-xs text-gray-500 sm:text-sm">Нийт дүн: <strong className="text-nebo-primary">{totalSum.toLocaleString()} ₮</strong></span>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[720px] text-sm">
-              <colgroup>
-                <col className="w-12 v-43 justify-between " />
-              </colgroup>
-              <thead>
-                <tr className="bg-slate-50 text-xs uppercase tracking-wide text-gray-500">
-                  {['Дугаар','Огноо','Код','Бараа','Тоо','Нэгж','Үнэ','Нийт','Хаашаа',''].map((h, idx) => (
-                    <th key={idx} className={`px-4 py-3 font-semibold ${['Тоо','Үнэ','Нийт'].includes(h) ? 'text-right' : 'text-left'}`}>{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {records.length === 0 ? (
-                  <tr>
-                    <td colSpan={10} className="px-4 py-12 text-center text-gray-400">
-                      Одоогоор зарлагын бичлэг алга. Баруун дээд «Зарлага бүртгэх» товчоор бүртгэнэ.
-                    </td>
-                  </tr>
-                ) : records.map(r => (
-                  <tr key={r.id} className="transition hover:bg-slate-50">
-                    <td className="px-4 py-3 font-mono text-xs text-gray-500">{r.doc_no}</td>
-                    <td className="px-4 py-3 text-gray-600">{r.doc_date}</td>
-                    <td className="px-4 py-3 font-mono text-xs">{r.item_code}</td>
-                    <td className="px-4 py-3 font-medium text-gray-800">{r.item_name}</td>
-                    <td className="px-4 py-3 text-right font-semibold">{r.qty}</td>
-                    <td className="px-4 py-3 text-gray-500">{r.unit}</td>
-                    <td className="px-4 py-3 text-right text-gray-600">{r.price.toLocaleString()}</td>
-                    <td className="px-4 py-3 text-right font-semibold text-nebo-primary">{r.total.toLocaleString()}</td>
-                    <td className="px-4 py-3">
-                      <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs text-gray-600">{r.purpose || '—'}</span>
-                    </td>
-                    <td className="px-4 py-3 text-right"><DeleteButton action={deleteExpenseAction} id={r.id} /></td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
+        <ExpenseHistory records={records} />
       </div>
     </>
   );

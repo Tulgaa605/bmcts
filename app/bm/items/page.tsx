@@ -1,6 +1,7 @@
 import Header from '@/components/Header';
 import Alert from '@/components/Alert';
 import ItemsGrid from '@/components/ItemsGrid';
+import ItemModal from '@/components/ItemModal';
 import { getDbConfig, requireUser } from '@/lib/auth';
 import { dbAll } from '@/lib/db';
 
@@ -16,9 +17,14 @@ export default async function ItemsPage({ searchParams }: { searchParams: Promis
     <>
       <Header user={user} activeMenu="bm" dbConnection={config?.label} />
       <div className="page-wrap">
-        <div className="mb-4 sm:mb-5">
-          <h2 className="page-title">БМ нэр, эхний үлдэгдэл бүртгэл</h2>
-          <p className="page-subtitle">Эхний үлдэгдэл оруулна. Эцсийн үлдэгдэл = эхний + орлого − зарлага − борлуулалт</p>
+        <div className="mb-4 flex flex-col gap-3 sm:mb-5 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h2 className="page-title">БМ нэр, эхний үлдэгдэл бүртгэл</h2>
+            <p className="page-subtitle">Гараар, Excel эсвэл CT QR-ээр нэмнэ. Эцсийн = эхний + орлого − зарлага + буцаалт</p>
+          </div>
+          <div className="self-end sm:self-auto">
+            <ItemModal />
+          </div>
         </div>
         <Alert message={msg} />
         <div className="rounded-xl border border-gray-200 bg-white p-3 shadow-sm sm:p-5">

@@ -4,10 +4,46 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { dbAll, dbGet, dbInsert, dbRun, updateItemQty, nextDocNo } from '@/lib/db';
 import { getDbConfig, requireUser } from '@/lib/auth';
-import { useFirebird } from '@/lib/connection';
+import { DbConnectionConfig, useFirebird } from '@/lib/connection';
 
 function redirectWithMsg(path: string, msg: string) {
   redirect(`${path}?msg=${encodeURIComponent(msg)}`);
+}
+
+async function returnableFromOrg(
+  config: DbConnectionConfig | undefined,
+  currentOrgId: number,
+  fromOrgId: number,
+  itemId: number
+) {
+  const received = (await dbGet<{ s: number }>(
+    config,
+    'SELECT COALESCE(SUM(qty),0) as s FROM bm_income WHERE org_id = ? AND item_id = ? AND source_org_id = ?',
+    [currentOrgId, itemId, fromOrgId]
+  ))?.s || 0;
+  const returned = (await dbGet<{ s: number }>(
+    config,
+    'SELECT COALESCE(SUM(qty),0) as s FROM bm_expense WHERE org_id = ? AND item_id = ? AND dest_org_id = ? AND COALESCE(is_return,0) = 0',
+    [currentOrgId, itemId, fromOrgId]
+  ))?.s || 0;
+  return Math.max(0, received - returned);
+}
+
+async function ensureItemOnOrg(
+  config: DbConnectionConfig | undefined,
+  orgId: number,
+  source: { code: string; name: string; unit: string; initial_price: number }
+) {
+  let destItem = await dbGet<{ id: number }>(config, 'SELECT id FROM bm_items WHERE org_id = ? AND code = ?', [orgId, source.code]);
+  if (!destItem) {
+    await dbRun(
+      config,
+      'INSERT INTO bm_items (org_id, code, name, unit, initial_qty, initial_price, current_qty) VALUES (?, ?, ?, ?, 0, ?, 0)',
+      [orgId, source.code, source.name, source.unit, source.initial_price]
+    );
+    destItem = await dbGet<{ id: number }>(config, 'SELECT id FROM bm_items WHERE org_id = ? AND code = ?', [orgId, source.code]);
+  }
+  return destItem;
 }
 
 export type ItemImportRow = {
@@ -113,15 +149,17 @@ export async function importIncomeAction(rows: IncomeImportRow[]) {
 export async function createItemAction(formData: FormData) {
   const user = await requireUser();
   const config = await getDbConfig();
-  const code = formData.get('code') as string;
-  const name = formData.get('name') as string;
-  const unit = (formData.get('unit') as string) || 'ш';
+  const code = String(formData.get('code') || '').trim();
+  const name = String(formData.get('name') || '').trim();
+  const unit = String(formData.get('unit') || 'ш').trim() || 'ш';
+  if (!code || !name) return redirectWithMsg('/bm/items', 'Код болон нэр оруулна уу');
   const initial_qty = parseFloat(formData.get('initial_qty') as string) || 0;
   const initial_price = parseFloat(formData.get('initial_price') as string) || 0;
 
   try {
     await dbRun(config, 'INSERT INTO bm_items (org_id, code, name, unit, initial_qty, initial_price, current_qty) VALUES (?, ?, ?, ?, ?, ?, ?)', [user.org_id, code, name, unit, initial_qty, initial_price, initial_qty]);
     revalidatePath('/bm/items');
+    revalidatePath('/bm/expense');
     redirectWithMsg('/bm/items', 'Амжилттай нэмэгдлээ');
   } catch {
     redirectWithMsg('/bm/items', 'Алдаа: Код давхардаж байна');
@@ -158,6 +196,8 @@ export async function createIncomeAction(formData: FormData) {
   await dbRun(config, 'INSERT INTO bm_income (org_id, doc_no, doc_date, item_id, qty, price, total, supplier, note, created_by) VALUES (?,?,?,?,?,?,?,?,?,?)', [user.org_id, formData.get('doc_no'), formData.get('doc_date'), item_id, qty, price, qty * price, formData.get('supplier'), formData.get('note'), user.id]);
   await updateItemQty(config, item_id);
   revalidatePath('/bm/income');
+  revalidatePath('/bm/items');
+  revalidatePath('/bm/report');
   redirectWithMsg('/bm/income', 'Орлого бүртгэгдлээ');
 }
 
@@ -225,74 +265,129 @@ export async function createExpenseAction(formData: FormData) {
 
   const total = qty * price;
   const note = (formData.get('note') as string) || '';
+
+  let isReturn = false;
+  if (destOrgId) {
+    const returnable = await returnableFromOrg(config, user.org_id, destOrgId, item_id);
+    if (returnable > 0) {
+      if (qty > returnable) {
+        return redirectWithMsg(
+          '/bm/expense',
+          `Буцаах үлдэгдэл ${returnable} ${sourceItem.unit}. Илүү тоог шинэ шилжүүлгээр бүртгэнэ.`
+        );
+      }
+      isReturn = true;
+    }
+  }
+
+  const purpose = isReturn ? `Буцаалт · ${destName}` : destName;
   const expenseId = await dbInsert(
     config,
-    'INSERT INTO bm_expense (org_id, doc_no, doc_date, item_id, qty, price, total, purpose, note, created_by, dest_id, dest_org_id) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)',
-    [user.org_id, formData.get('doc_no'), formData.get('doc_date'), item_id, qty, price, total, destName, note, user.id, destId, destOrgId]
+    'INSERT INTO bm_expense (org_id, doc_no, doc_date, item_id, qty, price, total, purpose, note, created_by, dest_id, dest_org_id, is_return, source_expense_id) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,0,NULL)',
+    [user.org_id, formData.get('doc_no'), formData.get('doc_date'), item_id, qty, price, total, purpose, note, user.id, destId, destOrgId]
   );
   await updateItemQty(config, item_id);
 
   if (destOrgId) {
-    let destItem = await dbGet<{ id: number }>(
-      config,
-      'SELECT id FROM bm_items WHERE org_id = ? AND code = ?',
-      [destOrgId, sourceItem.code]
-    );
-    if (!destItem) {
-      await dbRun(
-        config,
-        'INSERT INTO bm_items (org_id, code, name, unit, initial_qty, initial_price, current_qty) VALUES (?, ?, ?, ?, 0, ?, 0)',
-        [destOrgId, sourceItem.code, sourceItem.name, sourceItem.unit, sourceItem.initial_price]
-      );
-      destItem = await dbGet<{ id: number }>(
-        config,
-        'SELECT id FROM bm_items WHERE org_id = ? AND code = ?',
-        [destOrgId, sourceItem.code]
-      );
-    }
+    const destItem = await ensureItemOnOrg(config, destOrgId, sourceItem);
     if (destItem) {
-      const destDocNo = await nextDocNo(config, 'ORL', destOrgId);
-      await dbRun(
-        config,
-        'INSERT INTO bm_income (org_id, doc_no, doc_date, item_id, qty, price, total, supplier, note, created_by, source_org_id, source_expense_id) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)',
-        [
-          destOrgId,
-          destDocNo,
-          formData.get('doc_date'),
-          destItem.id,
-          qty,
-          price,
-          total,
-          user.org_name,
-          `Шилжүүлэг: ${user.org_name} → ${destName}`,
-          user.id,
-          user.org_id,
-          expenseId,
-        ]
-      );
-      await updateItemQty(config, destItem.id);
+      if (isReturn) {
+        const destDocNo = await nextDocNo(config, 'ZAR', destOrgId);
+        await dbRun(
+          config,
+          'INSERT INTO bm_expense (org_id, doc_no, doc_date, item_id, qty, price, total, purpose, note, created_by, dest_id, dest_org_id, is_return, source_expense_id) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,1,?)',
+          [
+            destOrgId,
+            destDocNo,
+            formData.get('doc_date'),
+            destItem.id,
+            qty,
+            price,
+            total,
+            `Буцаан авсан · ${user.org_name}`,
+            `Үлдэгдэл буцаалт: ${user.org_name} → ${destName}`,
+            user.id,
+            null,
+            user.org_id,
+            expenseId,
+          ]
+        );
+        await updateItemQty(config, destItem.id);
+      } else {
+        const destDocNo = await nextDocNo(config, 'ORL', destOrgId);
+        await dbRun(
+          config,
+          'INSERT INTO bm_income (org_id, doc_no, doc_date, item_id, qty, price, total, supplier, note, created_by, source_org_id, source_expense_id) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)',
+          [
+            destOrgId,
+            destDocNo,
+            formData.get('doc_date'),
+            destItem.id,
+            qty,
+            price,
+            total,
+            user.org_name,
+            `Шилжүүлэг: ${user.org_name} → ${destName}`,
+            user.id,
+            user.org_id,
+            expenseId,
+          ]
+        );
+        await updateItemQty(config, destItem.id);
+      }
     }
   }
 
   revalidatePath('/bm/expense');
   revalidatePath('/bm/income');
   revalidatePath('/bm/items');
-  redirectWithMsg('/bm/expense', destOrgId ? `Зарлага бүртгэгдлээ. ${destName} талд орлогоор орлоо.` : 'Зарлага бүртгэгдлээ');
+  redirectWithMsg(
+    '/bm/expense',
+    isReturn
+      ? `Үлдэгдэл буцаагдлаа. ${destName} талд орлого биш, эцсийн үлдэгдэл нэмэгдлээ.`
+      : destOrgId
+        ? `Зарлага бүртгэгдлээ. ${destName} талд орлогоор орлоо.`
+        : 'Зарлага бүртгэгдлээ'
+  );
 }
 
 export async function deleteExpenseAction(formData: FormData) {
   const user = await requireUser();
   const config = await getDbConfig();
-  const rec = await dbGet<{ item_id: number; id: number }>(config, 'SELECT id, item_id FROM bm_expense WHERE id = ? AND org_id = ?', [formData.get('id'), user.org_id]);
+  const rec = await dbGet<{ item_id: number; id: number; is_return: number | null; source_expense_id: number | null }>(
+    config,
+    'SELECT id, item_id, is_return, source_expense_id FROM bm_expense WHERE id = ? AND org_id = ?',
+    [formData.get('id'), user.org_id]
+  );
   if (rec) {
-    const linked = await dbGet<{ id: number; item_id: number }>(
+    const linkedIncome = await dbGet<{ id: number; item_id: number }>(
       config,
       'SELECT id, item_id FROM bm_income WHERE source_expense_id = ?',
       [rec.id]
     );
-    if (linked) {
-      await dbRun(config, 'DELETE FROM bm_income WHERE id = ?', [linked.id]);
-      await updateItemQty(config, linked.item_id);
+    if (linkedIncome) {
+      await dbRun(config, 'DELETE FROM bm_income WHERE id = ?', [linkedIncome.id]);
+      await updateItemQty(config, linkedIncome.item_id);
+    }
+    const linkedReturn = await dbGet<{ id: number; item_id: number }>(
+      config,
+      'SELECT id, item_id FROM bm_expense WHERE source_expense_id = ? AND COALESCE(is_return,0) = 1',
+      [rec.id]
+    );
+    if (linkedReturn) {
+      await dbRun(config, 'DELETE FROM bm_expense WHERE id = ?', [linkedReturn.id]);
+      await updateItemQty(config, linkedReturn.item_id);
+    }
+    if (rec.is_return && rec.source_expense_id) {
+      const origin = await dbGet<{ id: number; item_id: number }>(
+        config,
+        'SELECT id, item_id FROM bm_expense WHERE id = ?',
+        [rec.source_expense_id]
+      );
+      if (origin) {
+        await dbRun(config, 'DELETE FROM bm_expense WHERE id = ?', [origin.id]);
+        await updateItemQty(config, origin.item_id);
+      }
     }
     await dbRun(config, 'DELETE FROM bm_expense WHERE id = ? AND org_id = ?', [formData.get('id'), user.org_id]);
     await updateItemQty(config, rec.item_id);

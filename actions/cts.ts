@@ -69,6 +69,8 @@ export async function importCtsItemAction(raw: string, initialQty = 0) {
     if (!detail) return { error: 'CT-ээс мэдээлэл олдсонгүй (QR/код буруу)' };
     const name = await upsertCtsItem(config, user.org_id, detail.code || code, detail, Number(initialQty) || undefined);
     revalidatePath('/bm/expense');
+    revalidatePath('/bm/items');
+    revalidatePath('/bm/report');
     return { ok: true as const, detail, name };
   } catch (err) {
     return { error: err instanceof Error ? err.message : 'CT холболт амжилтгүй' };
@@ -103,6 +105,8 @@ export async function importCtsItemsAction(rawList: string, initialQty = 0) {
   }
 
   revalidatePath('/bm/expense');
+  revalidatePath('/bm/items');
+  revalidatePath('/bm/report');
   if (count === 0) {
     return { error: errors[0] || 'CT-ээс бараа татаж чадсангүй' };
   }

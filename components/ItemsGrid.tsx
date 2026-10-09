@@ -128,7 +128,7 @@ export default function ItemsGrid({ rows }: { rows: ItemRow[] }) {
           {pending ? 'Татаж байна...' : 'Excel-ээс татах'}
         </button>
         <span className="text-xs text-gray-500">
-          Багана: Код, Нэр, Нэгж, Эхний үлдэгдэл, Эцсийн үлдэгдэл
+          Багана: Код, Нэр, Нэгж, Эхний үлдэгдэл, Эхний үнэ
         </span>
         {status && <span className="text-sm text-nebo-primary">{status}</span>}
       </div>

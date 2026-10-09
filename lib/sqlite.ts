@@ -133,6 +133,8 @@ function migrateSchema() {
   `);
   if (!columnExists('bm_expense', 'dest_id')) db.exec('ALTER TABLE bm_expense ADD COLUMN dest_id INTEGER');
   if (!columnExists('bm_expense', 'dest_org_id')) db.exec('ALTER TABLE bm_expense ADD COLUMN dest_org_id INTEGER');
+  if (!columnExists('bm_expense', 'is_return')) db.exec('ALTER TABLE bm_expense ADD COLUMN is_return INTEGER DEFAULT 0');
+  if (!columnExists('bm_expense', 'source_expense_id')) db.exec('ALTER TABLE bm_expense ADD COLUMN source_expense_id INTEGER');
   if (!columnExists('bm_income', 'source_org_id')) db.exec('ALTER TABLE bm_income ADD COLUMN source_org_id INTEGER');
   if (!columnExists('bm_income', 'source_expense_id')) db.exec('ALTER TABLE bm_income ADD COLUMN source_expense_id INTEGER');
 }
@@ -183,17 +185,6 @@ function seedData() {
   const orgId = orgResult.lastInsertRowid;
   const hash = bcrypt.hashSync('admin123', 10);
   db.prepare('INSERT INTO users (org_id, username, password, full_name) VALUES (?, ?, ?, ?)').run(orgId, 'admin', hash, 'О.Оюунцэцэг');
-  const items = [
-    ['BM001', 'Цаас A4', 'багц', 100, 8500],
-    ['BM002', 'Үзэг хар', 'ш', 500, 500],
-    ['BM003', 'Бохирын цаас', 'ш', 50, 12000],
-    ['BM004', 'Бэх', 'ш', 30, 25000],
-    ['BM005', 'Файл', 'ш', 200, 1500],
-  ];
-  const insertItem = db.prepare('INSERT INTO bm_items (org_id, code, name, unit, initial_qty, initial_price, current_qty) VALUES (?, ?, ?, ?, ?, ?, ?)');
-  for (const [code, name, unit, qty, price] of items) {
-    insertItem.run(orgId, code, name, unit, qty, price, qty);
-  }
 }
 seedData();
 

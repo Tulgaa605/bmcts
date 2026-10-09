@@ -35,7 +35,7 @@ export default function Header({
     <header className="border-b-2 border-nebo-primary bg-white">
       <div className="flex items-center justify-between gap-3 border-b border-gray-200 bg-slate-50 px-3 py-2 sm:px-5">
         <Link href="/dashboard" className="flex shrink-0 items-baseline gap-1" onClick={closeMenu}>
-          <span className="text-xl font-black tracking-wider text-nebo-dark sm:text-2xl">NYBO</span>
+          <span className="text-xl font-black tracking-wider text-nebo-dark sm:text-2xl">NEBO</span>
           <span className="text-xs font-bold text-red-500 sm:text-sm">2018</span>
         </Link>
 

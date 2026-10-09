@@ -7,16 +7,6 @@ type Item = { id: number; code: string; name: string; unit: string; initial_qty:
 type OrgOpt = { id: number; name: string };
 type DestOpt = { id: number; kind: string; name: string };
 
-function buildQtyOptions(stock: number): number[] {
-  const max = Math.floor(stock);
-  if (max <= 0) return [];
-  const opts: number[] = [];
-  for (let i = 1; i <= Math.min(max, 50); i++) opts.push(i);
-  for (let i = 60; i <= max; i += 10) opts.push(i);
-  if (max > 50 && opts[opts.length - 1] !== max) opts.push(max);
-  return opts;
-}
-
 export default function ExpenseForm({
   docNo,
   items,
@@ -29,21 +19,21 @@ export default function ExpenseForm({
   destinations: DestOpt[];
 }) {
   const [selected, setSelected] = useState<Item | null>(null);
-  const [qty, setQty] = useState(0);
+  const [qty, setQty] = useState('');
   const [destination, setDestination] = useState('');
+  const [docDate, setDocDate] = useState(() => new Date().toISOString().split('T')[0]);
 
-  const today = new Date().toISOString().split('T')[0];
   const price = selected?.price ?? 0;
-  const total = qty * price;
-  const qtyOptions = selected ? buildQtyOptions(selected.current_qty) : [];
-  const ready = !!selected && qty > 0 && !!destination;
+  const qtyNum = parseFloat(qty) || 0;
+  const total = qtyNum * price;
+  const ready = !!selected && qtyNum > 0 && qtyNum <= (selected?.current_qty ?? 0) && !!destination;
   const duureg = destinations.filter((d) => d.kind === 'duureg');
   const sum = destinations.filter((d) => d.kind === 'sum');
 
   function onItemChange(e: React.ChangeEvent<HTMLSelectElement>) {
     const id = parseInt(e.target.value);
     setSelected(items.find((i) => i.id === id) || null);
-    setQty(0);
+    setQty('');
   }
 
   const labelCls = 'mb-1.5 block text-xs font-semibold uppercase tracking-wide text-gray-500';
@@ -54,12 +44,17 @@ export default function ExpenseForm({
   return (
     <form action={createExpenseAction} className="space-y-5">
       <input type="hidden" name="doc_no" value={docNo} />
-      <input type="hidden" name="doc_date" value={today} />
       <input type="hidden" name="price" value={price} />
 
-      <div className="flex flex-wrap items-center gap-x-6 gap-y-1 text-xs text-gray-500">
-        <span>Баримт: <strong className="font-mono text-nebo-primary">{docNo}</strong></span>
-        <span>Огноо: <strong className="text-gray-700">{today}</strong></span>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div>
+          <label className={labelCls}>Баримт</label>
+          <div className={readCls}><span className="font-mono text-nebo-primary">{docNo}</span></div>
+        </div>
+        <div>
+          <label className={labelCls}>Огноо *</label>
+          <input name="doc_date" type="date" required value={docDate} onChange={(e) => setDocDate(e.target.value)} className={selectCls} />
+        </div>
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -77,21 +72,20 @@ export default function ExpenseForm({
 
         <div>
           <label className={labelCls}>Тоо хэмжээ *</label>
-          <select
+          <input
             name="qty"
+            type="number"
+            step="0.01"
+            min="0.01"
+            max={selected?.current_qty || undefined}
             required
-            value={qty || ''}
-            onChange={(e) => setQty(parseFloat(e.target.value) || 0)}
+            value={qty}
+            onChange={(e) => setQty(e.target.value)}
             disabled={!selected}
             className={selectCls}
-          >
-            <option value="">— Сонгох —</option>
-            {qtyOptions.map((q) => (
-              <option key={q} value={q}>{q} {selected?.unit}</option>
-            ))}
-          </select>
+          />
           {selected && (
-            <p className="mt-1 text-xs text-gray-400">Дээд тал нь {Math.floor(selected.current_qty)} {selected.unit}</p>
+            <p className="mt-1 text-xs text-gray-400">Дээд тал нь {selected.current_qty} {selected.unit}</p>
           )}
         </div>
 
@@ -121,6 +115,11 @@ export default function ExpenseForm({
               </optgroup>
             )}
           </select>
+          {destination.startsWith('org:') && (
+            <p className="mt-1 text-xs text-gray-400">
+              Энэ барааг тэндээс авсан бол үлдэгдэл буцаалт болно. Шинээр илгээвэл нөгөө талд орлогоор орно.
+            </p>
+          )}
         </div>
 
         <div>
@@ -138,9 +137,9 @@ export default function ExpenseForm({
           <div className={readCls}>{price ? price.toLocaleString() + ' ₮' : '—'}</div>
         </div>
 
-        <div>
-          <label className={labelCls}>Нэгж</label>
-          <div className={readCls}>{selected?.unit ?? '—'}</div>
+        <div className="sm:col-span-2 lg:col-span-4">
+          <label className={labelCls}>Тайлбар</label>
+          <input name="note" className={selectCls} />
         </div>
       </div>
 
